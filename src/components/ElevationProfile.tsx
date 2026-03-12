@@ -25,8 +25,6 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
-  if (points.length === 0) return null;
-
   const totalDist = points[points.length - 1]?.distance ?? 1;
   const elevations = points.map((p) => p.elevation);
   const minEle = Math.min(...elevations);
@@ -90,21 +88,27 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
     [points, totalDist, onSegmentsChange]
   );
 
-  // PointerDown on SVG background → add or remove marker
+  // PointerDown on SVG background → remove nearby marker, or start dragging a new one
   const handleSvgPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (draggingIndex !== null) return;
       const dist = svgXToDist(e.clientX);
-      // Check if near an existing marker (within ~3% of total)
+      // Remove if tapping near an existing marker (within ~3% of total)
       const threshold = totalDist * 0.03;
       const nearIdx = splitDistances.findIndex((d) => Math.abs(d - dist) < threshold);
       if (nearIdx !== -1) {
         updateSplits(splitDistances.filter((_, i) => i !== nearIdx));
       } else {
-        updateSplits([...splitDistances, dist].sort((a, b) => a - b));
+        // Add the new marker and immediately start dragging it
+        const newSplits = [...splitDistances, dist].sort((a, b) => a - b);
+        const newIdx = newSplits.indexOf(dist);
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setSplitDistances(newSplits);
+        setDraggingIndex(newIdx);
+        onSegmentsChange(deriveSegments(points, [0, ...newSplits, totalDist]));
       }
     },
-    [draggingIndex, svgXToDist, splitDistances, totalDist, updateSplits]
+    [draggingIndex, svgXToDist, splitDistances, totalDist, updateSplits, points, onSegmentsChange]
   );
 
   // Drag handlers
@@ -135,6 +139,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   const handlePointerUp = useCallback(() => {
     setDraggingIndex(null);
   }, []);
+
+  if (points.length === 0) return null;
 
   // Axis labels (x: distance ticks)
   const tickCount = Math.max(1, Math.min(5, Math.floor(totalDist)));
