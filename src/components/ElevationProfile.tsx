@@ -9,7 +9,7 @@ interface ElevationProfileProps {
 
 const W = 358; // SVG viewBox width (matches 390px - 32px padding)
 const H = 152; // SVG viewBox height — matches Figma
-const PAD = { top: 12, right: 8, bottom: 8, left: 8 };
+const PAD = { top: 12, right: 0, bottom: 8, left: 0 };
 
 function toSvgX(dist: number, totalDist: number) {
   return PAD.left + (dist / totalDist) * (W - PAD.left - PAD.right);
