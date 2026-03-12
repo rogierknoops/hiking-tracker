@@ -231,9 +231,9 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
               {isDragging && (
                 <>
                   <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
-                    stroke="#f86d23" strokeWidth={1} strokeOpacity={0.4} />
+                    stroke="#d9d9d9" strokeWidth={1} />
                   <line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom}
-                    stroke="#f86d23" strokeWidth={1} strokeOpacity={0.4} />
+                    stroke="#d9d9d9" strokeWidth={1} />
                 </>
               )}
               <circle
