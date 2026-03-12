@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider } from "../design-system";
 import { IconAdd } from "../design-system/icons";
 import { IconSegments } from "../design-system/icons";
 import { SegmentRow } from "./SegmentRow";
+import { ElevationProfile } from "./ElevationProfile";
+import { GpxSegmentPreview } from "./GpxSegmentPreview";
+import { parseGpx } from "../lib/gpx";
+import type { DerivedSegment, TrackPoint } from "../lib/gpx";
 
 interface EditSegmentsScreenProps {
   onDone: () => void;
@@ -14,6 +18,46 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
   const addSegment = useHikeStore((s) => s.addSegment);
   const removeSegment = useHikeStore((s) => s.removeSegment);
   const [focusLastAdded, setFocusLastAdded] = useState(false);
+  const [gpxPoints, setGpxPoints] = useState<TrackPoint[] | null>(null);
+  const [derivedSegments, setDerivedSegments] = useState<DerivedSegment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const replaceSegments = useHikeStore((s) => s.replaceSegments);
+
+  const handleNameChange = useCallback((index: number, name: string) => {
+    setDerivedSegments((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, name } : s))
+    );
+  }, []);
+
+  const handleUploadClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const xml = ev.target?.result as string;
+      const points = parseGpx(xml);
+      if (points.length > 0) {
+        setGpxPoints(points);
+        setDerivedSegments([]);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleConfirmGpx = () => {
+    replaceSegments(derivedSegments.map((s) => ({
+      name: s.name || undefined,
+      distance: s.distance,
+      ascent: s.ascent,
+      descent: s.descent,
+    })));
+    setGpxPoints(null);
+    setDerivedSegments([]);
+    onDone();
+  };
 
   const handleAdd = () => {
     addSegment({ distance: 0, ascent: 0, descent: 0 });
@@ -62,23 +106,55 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
           </div>
         ))}
 
-        {/* ADD button row — skeleton always visible as next-segment placeholder */}
+        {/* ADD / UPLOAD button row */}
         <div className="flex items-center justify-between w-full">
           <div className="flex gap-[8px] items-center">
             <div className="bg-[#d9d9d9] rounded-[2px] size-[12px] shrink-0" />
             <div className="bg-[#d9d9d9] h-[12px] rounded-[2px] shrink-0 w-[32px]" />
           </div>
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
-          >
-            <IconAdd className="size-3 shrink-0" />
-            <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-              Add
-            </span>
-          </button>
+          <div className="flex gap-[8px]">
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
+            >
+              <IconAdd className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Manual
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={handleUploadClick}
+              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
+            >
+              <IconAdd className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Upload
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".gpx"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
+
+        {gpxPoints && (
+          <div className="flex flex-col gap-[24px]">
+            <ElevationProfile
+              points={gpxPoints}
+              onSegmentsChange={setDerivedSegments}
+            />
+            <GpxSegmentPreview
+              segments={derivedSegments}
+              onNameChange={handleNameChange}
+            />
+          </div>
+        )}
 
         <Divider />
 
@@ -86,12 +162,12 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
         <div className="flex items-center justify-end w-full">
           <button
             type="button"
-            onClick={onDone}
+            onClick={gpxPoints ? handleConfirmGpx : onDone}
             className="bg-[#f86d23] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
           >
             <IconAdd className="size-3 shrink-0" />
             <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-              Done
+              {gpxPoints ? "Confirm" : "Done"}
             </span>
           </button>
         </div>
