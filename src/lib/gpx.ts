@@ -47,3 +47,43 @@ export function parseGpx(xml: string): TrackPoint[] {
 
   return points;
 }
+
+export interface DerivedSegment {
+  distance: number;  // km, 2dp
+  ascent: number;    // m integer
+  descent: number;   // m integer
+  name: string;      // blank
+}
+
+/**
+ * Given track points and an array of split distances (including 0 and total),
+ * derive segment specs for each interval.
+ */
+export function deriveSegments(
+  points: TrackPoint[],
+  splitDistances: number[]
+): DerivedSegment[] {
+  const sorted = [...splitDistances].sort((a, b) => a - b);
+
+  return sorted.slice(0, -1).map((start, i) => {
+    const end = sorted[i + 1];
+    const interval = points.filter(
+      (p) => p.distance >= start && p.distance <= end
+    );
+
+    let ascent = 0;
+    let descent = 0;
+    for (let j = 1; j < interval.length; j++) {
+      const delta = interval[j].elevation - interval[j - 1].elevation;
+      if (delta > 0) ascent += delta;
+      else descent += Math.abs(delta);
+    }
+
+    return {
+      distance: Math.round((end - start) * 100) / 100,
+      ascent: Math.round(ascent),
+      descent: Math.round(descent),
+      name: "",
+    };
+  });
+}
