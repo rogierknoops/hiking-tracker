@@ -24,6 +24,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  // Last-interacted marker stays visually selected after release
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   // Tracks whether the current drag has moved — used to distinguish tap-to-remove from drag
   const dragMoved = useRef(false);
 
@@ -101,6 +103,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
       dragMoved.current = true; // treat new-marker placement as already "moved"
       setSplitDistances(newSplits);
       setDraggingIndex(newIdx);
+      setSelectedIndex(newIdx);
       onSegmentsChange(deriveSegments(points, [0, ...newSplits, totalDist]));
     },
     [draggingIndex, svgXToDist, splitDistances, totalDist, points, onSegmentsChange]
@@ -114,6 +117,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
       (e.target as Element).setPointerCapture(e.pointerId);
       dragMoved.current = false;
       setDraggingIndex(index);
+      setSelectedIndex(index);
     },
     []
   );
@@ -138,6 +142,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
     // Tap on a marker (no drag movement) → remove it
     if (draggingIndex !== null && !dragMoved.current) {
       updateSplits(splitDistances.filter((_, i) => i !== draggingIndex));
+      setSelectedIndex(null);
     }
     setDraggingIndex(null);
   }, [draggingIndex, dragMoved, splitDistances, updateSplits]);
@@ -167,14 +172,15 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
         {/* Profile line */}
         <path d={pathData} fill="none" stroke="#0b0b0b" strokeWidth={1.5} strokeLinejoin="round" />
 
-        {/* Split markers — solid orange circles */}
+        {/* Split markers — solid orange circles; selected marker is larger */}
         {splitDistances.map((dist, i) => {
           const x = toSvgX(dist, totalDist);
           const y = toSvgY(eleAtDist(dist), minEle, maxEle);
+          const isSelected = i === selectedIndex;
           return (
             <circle
               key={dist}
-              cx={x} cy={y} r={8}
+              cx={x} cy={y} r={isSelected ? 11 : 7}
               fill="#f86d23"
               style={{ cursor: "grab" }}
               onPointerDown={(e) => handleMarkerPointerDown(e, i)}
