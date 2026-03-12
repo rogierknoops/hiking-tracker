@@ -177,14 +177,25 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
           const x = toSvgX(dist, totalDist);
           const y = toSvgY(eleAtDist(dist), minEle, maxEle);
           const isSelected = i === selectedIndex;
+          const isDragging = i === draggingIndex;
           return (
-            <circle
-              key={dist}
-              cx={x} cy={y} r={isSelected ? 11 : 7}
-              fill="#f86d23"
-              style={{ cursor: "grab" }}
-              onPointerDown={(e) => handleMarkerPointerDown(e, i)}
-            />
+            <g key={dist}>
+              {/* Crosshairs — only visible while actively dragging this marker */}
+              {isDragging && (
+                <>
+                  <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                    stroke="#f86d23" strokeWidth={1} strokeOpacity={0.4} />
+                  <line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom}
+                    stroke="#f86d23" strokeWidth={1} strokeOpacity={0.4} />
+                </>
+              )}
+              <circle
+                cx={x} cy={y} r={isSelected ? 11 : 7}
+                fill="#f86d23"
+                style={{ cursor: "grab" }}
+                onPointerDown={(e) => handleMarkerPointerDown(e, i)}
+              />
+            </g>
           );
         })}
       </svg>
