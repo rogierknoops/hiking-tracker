@@ -8,8 +8,8 @@ interface ElevationProfileProps {
 }
 
 const W = 358; // SVG viewBox width (matches 390px - 32px padding)
-const H = 160; // SVG viewBox height
-const PAD = { top: 12, right: 8, bottom: 24, left: 8 };
+const H = 152; // SVG viewBox height — matches Figma
+const PAD = { top: 12, right: 8, bottom: 8, left: 8 };
 
 function toSvgX(dist: number, totalDist: number) {
   return PAD.left + (dist / totalDist) * (W - PAD.left - PAD.right);
@@ -144,63 +144,54 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
 
   if (points.length === 0) return null;
 
-  // Axis labels (x: distance ticks)
-  const tickCount = Math.max(1, Math.min(5, Math.floor(totalDist)));
-  const ticks = Array.from({ length: tickCount + 1 }, (_, i) =>
-    Math.round((totalDist / tickCount) * i * 10) / 10
-  );
-
   return (
-    <svg
-      ref={svgRef}
-      viewBox={`0 0 ${W} ${H}`}
-      className="w-full touch-none select-none"
-      style={{ height: H }}
-      onPointerDown={handleSvgPointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-    >
-      {/* Area fill */}
-      <path d={areaData} fill="#0b0b0b" fillOpacity={0.08} />
+    <div className="flex flex-col gap-[8px] w-full">
+      {/* Title */}
+      <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] whitespace-nowrap">
+        Elevation Profile
+      </span>
 
-      {/* Profile line */}
-      <path d={pathData} fill="none" stroke="#0b0b0b" strokeWidth={1.5} strokeLinejoin="round" />
+      {/* Chart */}
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full touch-none select-none"
+        style={{ height: H }}
+        onPointerDown={handleSvgPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        {/* Area fill */}
+        <path d={areaData} fill="#0b0b0b" fillOpacity={0.08} />
 
-      {/* Split markers */}
-      {splitDistances.map((dist, i) => {
-        const x = toSvgX(dist, totalDist);
-        const y = toSvgY(eleAtDist(dist), minEle, maxEle);
-        return (
-          <g key={dist}>
-            <line
-              x1={x} y1={y} x2={x} y2={H - PAD.bottom}
-              stroke="#0b0b0b" strokeWidth={1} strokeDasharray="3 3"
-            />
+        {/* Profile line */}
+        <path d={pathData} fill="none" stroke="#0b0b0b" strokeWidth={1.5} strokeLinejoin="round" />
+
+        {/* Split markers — solid orange circles */}
+        {splitDistances.map((dist, i) => {
+          const x = toSvgX(dist, totalDist);
+          const y = toSvgY(eleAtDist(dist), minEle, maxEle);
+          return (
             <circle
-              cx={x} cy={y} r={6}
-              fill="#f8f8f8" stroke="#0b0b0b" strokeWidth={1.5}
+              key={dist}
+              cx={x} cy={y} r={8}
+              fill="#f86d23"
               style={{ cursor: "grab" }}
               onPointerDown={(e) => handleMarkerPointerDown(e, i)}
             />
-          </g>
-        );
-      })}
+          );
+        })}
+      </svg>
 
-      {/* X-axis labels */}
-      {ticks.map((t) => (
-        <text
-          key={t}
-          x={toSvgX(t, totalDist)}
-          y={H - 4}
-          textAnchor="middle"
-          fontSize={8}
-          fill="#0b0b0b"
-          fontFamily="TX-02, monospace"
-          opacity={0.5}
-        >
-          {t}km
-        </text>
-      ))}
-    </svg>
+      {/* Distance labels */}
+      <div className="flex items-start justify-between w-full">
+        <span className="font-['TX-02'] uppercase text-[#8c8c8c] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] whitespace-nowrap">
+          0 KM
+        </span>
+        <span className="font-['TX-02'] uppercase text-[#8c8c8c] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] whitespace-nowrap">
+          {totalDist.toFixed(2)} KM
+        </span>
+      </div>
+    </div>
   );
 }
