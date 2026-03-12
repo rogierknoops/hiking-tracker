@@ -20,6 +20,7 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
   const [focusLastAdded, setFocusLastAdded] = useState(false);
   const [gpxPoints, setGpxPoints] = useState<TrackPoint[] | null>(null);
   const [derivedSegments, setDerivedSegments] = useState<DerivedSegment[]>([]);
+  const [gpxUploadCount, setGpxUploadCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceSegments = useHikeStore((s) => s.replaceSegments);
 
@@ -35,12 +36,18 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
+    reader.onerror = () => {
+      alert("Could not read the file. Please try again.");
+    };
     reader.onload = (ev) => {
       const xml = ev.target?.result as string;
       const points = parseGpx(xml);
       if (points.length > 0) {
         setGpxPoints(points);
         setDerivedSegments([]);
+        setGpxUploadCount((n) => n + 1);
+      } else {
+        alert("No track points found. Make sure the file is a valid GPX with a track.");
       }
     };
     reader.readAsText(file);
@@ -48,8 +55,9 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
   };
 
   const handleConfirmGpx = () => {
+    if (derivedSegments.length === 0) return;
     replaceSegments(derivedSegments.map((s) => ({
-      name: s.name || undefined,
+      name: s.name.trim() || undefined,
       distance: s.distance,
       ascent: s.ascent,
       descent: s.descent,
@@ -146,8 +154,13 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
         {gpxPoints && (
           <div className="flex flex-col gap-[24px]">
             <ElevationProfile
+              key={gpxUploadCount}
               points={gpxPoints}
-              onSegmentsChange={setDerivedSegments}
+              onSegmentsChange={(newSegs) => {
+                setDerivedSegments((prev) =>
+                  newSegs.map((s, i) => ({ ...s, name: prev[i]?.name ?? s.name }))
+                );
+              }}
             />
             <GpxSegmentPreview
               segments={derivedSegments}

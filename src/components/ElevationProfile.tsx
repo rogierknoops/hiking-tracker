@@ -21,11 +21,11 @@ function toSvgY(ele: number, minEle: number, maxEle: number) {
 }
 
 export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileProps) {
-  if (points.length === 0) return null;
-
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+
+  if (points.length === 0) return null;
 
   const totalDist = points[points.length - 1]?.distance ?? 1;
   const elevations = points.map((p) => p.elevation);
