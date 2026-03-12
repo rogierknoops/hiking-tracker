@@ -28,6 +28,7 @@ export function GpxSegmentPreview({ segments, onNameChange }: GpxSegmentPreviewP
               placeholder="SEGMENT NAME"
               value={seg.name}
               onChange={(e) => onNameChange(i, e.target.value)}
+              aria-label={`Segment ${i + 1} name`}
               className="font-['TX-02'] text-[#0b0b0b] text-[14px] font-bold uppercase tracking-[-0.02em] leading-[0.85] bg-transparent border-none outline-none placeholder-[#d9d9d9] w-full"
             />
           </div>
