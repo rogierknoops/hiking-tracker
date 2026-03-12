@@ -24,6 +24,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  // Tracks whether the current drag has moved — used to distinguish tap-to-remove from drag
+  const dragMoved = useRef(false);
 
   const totalDist = points[points.length - 1]?.distance ?? 1;
   const elevations = points.map((p) => p.elevation);
@@ -88,27 +90,20 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
     [points, totalDist, onSegmentsChange]
   );
 
-  // PointerDown on SVG background → remove nearby marker, or start dragging a new one
+  // PointerDown on SVG background → start dragging a new marker
   const handleSvgPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (draggingIndex !== null) return;
       const dist = svgXToDist(e.clientX);
-      // Remove if tapping near an existing marker (within ~3% of total)
-      const threshold = totalDist * 0.03;
-      const nearIdx = splitDistances.findIndex((d) => Math.abs(d - dist) < threshold);
-      if (nearIdx !== -1) {
-        updateSplits(splitDistances.filter((_, i) => i !== nearIdx));
-      } else {
-        // Add the new marker and immediately start dragging it
-        const newSplits = [...splitDistances, dist].sort((a, b) => a - b);
-        const newIdx = newSplits.indexOf(dist);
-        e.currentTarget.setPointerCapture(e.pointerId);
-        setSplitDistances(newSplits);
-        setDraggingIndex(newIdx);
-        onSegmentsChange(deriveSegments(points, [0, ...newSplits, totalDist]));
-      }
+      const newSplits = [...splitDistances, dist].sort((a, b) => a - b);
+      const newIdx = newSplits.indexOf(dist);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      dragMoved.current = true; // treat new-marker placement as already "moved"
+      setSplitDistances(newSplits);
+      setDraggingIndex(newIdx);
+      onSegmentsChange(deriveSegments(points, [0, ...newSplits, totalDist]));
     },
-    [draggingIndex, svgXToDist, splitDistances, totalDist, updateSplits, points, onSegmentsChange]
+    [draggingIndex, svgXToDist, splitDistances, totalDist, points, onSegmentsChange]
   );
 
   // Drag handlers
@@ -117,6 +112,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
     (e: React.PointerEvent, index: number) => {
       e.stopPropagation();
       (e.target as Element).setPointerCapture(e.pointerId);
+      dragMoved.current = false;
       setDraggingIndex(index);
     },
     []
@@ -127,6 +123,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
       if (draggingIndex === null) return;
       const dist = svgXToDist(e.clientX);
       const newSplits = [...splitDistances];
+      if (newSplits[draggingIndex] === dist) return;
+      dragMoved.current = true;
       newSplits[draggingIndex] = dist;
       newSplits.sort((a, b) => a - b);
       const newIdx = newSplits.indexOf(dist);
@@ -137,8 +135,12 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   );
 
   const handlePointerUp = useCallback(() => {
+    // Tap on a marker (no drag movement) → remove it
+    if (draggingIndex !== null && !dragMoved.current) {
+      updateSplits(splitDistances.filter((_, i) => i !== draggingIndex));
+    }
     setDraggingIndex(null);
-  }, []);
+  }, [draggingIndex, dragMoved, splitDistances, updateSplits]);
 
   if (points.length === 0) return null;
 
