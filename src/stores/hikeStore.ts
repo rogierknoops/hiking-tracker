@@ -4,7 +4,17 @@ import { evaluateDuration, DEFAULT_FORMULA } from "../lib/formula";
 import { loadData, saveData } from "../lib/storage";
 
 function generateId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // Falls through to manual generation (non-secure context, e.g. HTTP on LAN)
+    }
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 function makeEmptySession(formula: string): HikeSession {
@@ -29,6 +39,7 @@ interface HikeState extends HikeSession {
   addSegment: (segment: Omit<Segment, "id" | "plannedDuration">) => void;
   updateSegment: (id: string, updates: Partial<Segment>) => void;
   removeSegment: (id: string) => void;
+  replaceSegments: (segments: Omit<Segment, "id" | "plannedDuration">[]) => void;
   reorderSegments: (fromIndex: number, toIndex: number) => void;
   setDepartureTime: (iso: string) => void;
   setDurationFormula: (formula: string) => void;
@@ -90,6 +101,17 @@ export const useHikeStore = create<HikeState>((set, get) => ({
 
   removeSegment: (id) => {
     set({ segments: get().segments.filter((s) => s.id !== id) });
+    get().persist();
+  },
+
+  replaceSegments: (segments) => {
+    const { durationFormula } = get();
+    const newSegments: Segment[] = segments.map((s) => ({
+      ...s,
+      id: generateId(),
+      plannedDuration: evaluateDuration(durationFormula, s.distance, s.ascent, s.descent),
+    }));
+    set({ segments: newSegments });
     get().persist();
   },
 
