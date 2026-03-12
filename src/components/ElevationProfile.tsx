@@ -190,8 +190,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
                 </>
               )}
               <circle
-                cx={x} cy={y} r={isSelected ? 11 : 7}
-                fill="#f86d23"
+                cx={x} cy={y} r={isSelected ? 4.5 : 2.5}
+                fill="#f86d23" stroke="#0b0b0b" strokeWidth={1}
                 style={{ cursor: "grab" }}
                 onPointerDown={(e) => handleMarkerPointerDown(e, i)}
               />
