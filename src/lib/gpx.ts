@@ -26,12 +26,18 @@ export function parseGpx(xml: string): TrackPoint[] {
   let prevLon: number | null = null;
 
   for (const pt of trkpts) {
-    const lat = parseFloat(pt.getAttribute("lat") ?? "0");
-    const lon = parseFloat(pt.getAttribute("lon") ?? "0");
-    const ele = parseFloat(pt.querySelector("ele")?.textContent ?? "0");
+    const latStr = pt.getAttribute("lat");
+    const lonStr = pt.getAttribute("lon");
+    if (latStr === null || lonStr === null) continue;
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+    if (isNaN(lat) || isNaN(lon)) continue;
 
-    if (prevLat !== null && prevLon !== null) {
-      cumDist += haversineKm(prevLat, prevLon, lat, lon);
+    const eleText = pt.querySelector("ele")?.textContent ?? "0";
+    const ele = parseFloat(eleText) || 0;
+
+    if (prevLat !== null) {
+      cumDist += haversineKm(prevLat, prevLon!, lat, lon);
     }
 
     points.push({ distance: cumDist, elevation: ele });
