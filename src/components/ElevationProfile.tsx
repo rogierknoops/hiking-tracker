@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import type { TrackPoint, DerivedSegment } from "../lib/gpx";
 import { deriveSegments } from "../lib/gpx";
 
@@ -20,6 +20,42 @@ function toSvgY(ele: number, minEle: number, maxEle: number) {
   return PAD.top + (1 - (ele - minEle) / range) * (H - PAD.top - PAD.bottom);
 }
 
+/** Reduce to at most maxN evenly-spaced samples, keeping first and last. */
+function downsample(pts: TrackPoint[], maxN: number): TrackPoint[] {
+  if (pts.length <= maxN) return pts;
+  const step = (pts.length - 1) / (maxN - 1);
+  return Array.from({ length: maxN }, (_, i) => pts[Math.round(i * step)]);
+}
+
+/** Smooth elevation values with a simple moving average. */
+function smoothElevations(pts: TrackPoint[], window: number): TrackPoint[] {
+  const half = Math.floor(window / 2);
+  return pts.map((p, i) => {
+    const slice = pts.slice(Math.max(0, i - half), Math.min(pts.length, i + half + 1));
+    const avg = slice.reduce((s, q) => s + q.elevation, 0) / slice.length;
+    return { ...p, elevation: avg };
+  });
+}
+
+/** Catmull-Rom spline → cubic bezier SVG path through {x,y} points. */
+function catmullRomPath(pts: { x: number; y: number }[], tension = 0.4): string {
+  if (pts.length < 2) return "";
+  const f = (n: number) => n.toFixed(2);
+  let d = `M ${f(pts[0].x)} ${f(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    d += ` C ${f(cp1x)} ${f(cp1y)}, ${f(cp2x)} ${f(cp2y)}, ${f(p2.x)} ${f(p2.y)}`;
+  }
+  return d;
+}
+
 export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
@@ -34,33 +70,44 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   const minEle = Math.min(...elevations);
   const maxEle = Math.max(...elevations);
 
-  // Build smooth SVG path
-  const pathData = points
-    .map((p, i) => {
-      const x = toSvgX(p.distance, totalDist);
-      const y = toSvgY(p.elevation, minEle, maxEle);
-      return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
-    })
-    .join(" ");
+  // Downsample + smooth for display only; original points used for segment derivation
+  const displayPoints = useMemo(
+    () => smoothElevations(downsample(points, 200), 5),
+    [points]
+  );
 
-  // Area path (close to bottom)
-  const areaData =
-    pathData +
-    ` L ${toSvgX(totalDist, totalDist)} ${H - PAD.bottom}` +
-    ` L ${PAD.left} ${H - PAD.bottom} Z`;
+  const svgPts = useMemo(
+    () => displayPoints.map((p) => ({
+      x: toSvgX(p.distance, totalDist),
+      y: toSvgY(p.elevation, minEle, maxEle),
+    })),
+    [displayPoints, totalDist, minEle, maxEle]
+  );
 
-  // Find elevation at a given cumulative distance (nearest point)
+  const pathData = useMemo(() => catmullRomPath(svgPts), [svgPts]);
+
+  // Area path closes the curve to the bottom of the chart
+  const areaData = useMemo(
+    () =>
+      pathData +
+      ` L ${toSvgX(totalDist, totalDist)} ${H - PAD.bottom}` +
+      ` L ${PAD.left} ${H - PAD.bottom} Z`,
+    [pathData, totalDist]
+  );
+
+  // Find elevation at a given cumulative distance using smoothed display points
+  // so markers sit on the visible line
   const eleAtDist = useCallback(
     (dist: number) => {
-      let nearest = points[0];
+      let nearest = displayPoints[0];
       let minDiff = Infinity;
-      for (const p of points) {
+      for (const p of displayPoints) {
         const diff = Math.abs(p.distance - dist);
         if (diff < minDiff) { minDiff = diff; nearest = p; }
       }
       return nearest.elevation;
     },
-    [points]
+    [displayPoints]
   );
 
   // Convert SVG clientX to a snapped distance value
