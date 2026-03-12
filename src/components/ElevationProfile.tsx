@@ -21,6 +21,8 @@ function toSvgY(ele: number, minEle: number, maxEle: number) {
 }
 
 export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileProps) {
+  if (points.length === 0) return null;
+
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -88,8 +90,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
     [points, totalDist, onSegmentsChange]
   );
 
-  // Click on SVG background → add or remove marker
-  const handleSvgClick = useCallback(
+  // PointerDown on SVG background → add or remove marker
+  const handleSvgPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (draggingIndex !== null) return;
       const dist = svgXToDist(e.clientX);
@@ -106,6 +108,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   );
 
   // Drag handlers
+
   const handleMarkerPointerDown = useCallback(
     (e: React.PointerEvent, index: number) => {
       e.stopPropagation();
@@ -122,6 +125,8 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
       const newSplits = [...splitDistances];
       newSplits[draggingIndex] = dist;
       newSplits.sort((a, b) => a - b);
+      const newIdx = newSplits.indexOf(dist);
+      if (newIdx !== draggingIndex) setDraggingIndex(newIdx);
       updateSplits(newSplits);
     },
     [draggingIndex, svgXToDist, splitDistances, updateSplits]
@@ -132,7 +137,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
   }, []);
 
   // Axis labels (x: distance ticks)
-  const tickCount = Math.min(5, Math.floor(totalDist));
+  const tickCount = Math.max(1, Math.min(5, Math.floor(totalDist)));
   const ticks = Array.from({ length: tickCount + 1 }, (_, i) =>
     Math.round((totalDist / tickCount) * i * 10) / 10
   );
@@ -143,7 +148,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
       viewBox={`0 0 ${W} ${H}`}
       className="w-full touch-none select-none"
       style={{ height: H }}
-      onPointerDown={handleSvgClick}
+      onPointerDown={handleSvgPointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
@@ -158,9 +163,9 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
         const x = toSvgX(dist, totalDist);
         const y = toSvgY(eleAtDist(dist), minEle, maxEle);
         return (
-          <g key={i}>
+          <g key={dist}>
             <line
-              x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom}
+              x1={x} y1={y} x2={x} y2={H - PAD.bottom}
               stroke="#0b0b0b" strokeWidth={1} strokeDasharray="3 3"
             />
             <circle
