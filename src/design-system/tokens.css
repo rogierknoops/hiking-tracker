@@ -1,0 +1,48 @@
+/**
+ * Design system tokens from Figma (Hiking Tracker v4)
+ * Black: #0B0B0B, Background: #F8F8F8, Grey: #D9D9D9, Orange: #F86D23
+ * Positive: #81FF65, Negative: #F82323
+ * Font: TX-02
+ */
+
+@font-face {
+  font-family: "TX-02";
+  src: url("/fonts/TX-02-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "TX-02";
+  src: url("/fonts/TX-02-SemiLight.ttf") format("truetype");
+  font-weight: 350;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "TX-02";
+  src: url("/fonts/TX-02-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  /* Colors */
+  --ds-black: #0b0b0b;
+  --ds-background: #f8f8f8;
+  --ds-grey: #d9d9d9;
+  --ds-grey-muted: #e7e7e7;
+  --ds-orange: #f86d23;
+  --ds-positive: #81ff65;
+  --ds-negative: #f82323;
+  --ds-white: #f8f8f8;
+
+  /* Typography */
+  --ds-font-family: "TX-02", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ds-font-size: 14px;
+  --ds-line-height: 0.85;
+  --ds-letter-spacing: -0.28px;
+  --ds-font-weight-regular: 400;
+  --ds-font-weight-semilight: 350;
+  --ds-font-weight-bold: 700;
+}
