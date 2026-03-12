@@ -213,9 +213,6 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
-        {/* Area fill */}
-        <path d={areaData} fill="#0b0b0b" fillOpacity={0.08} />
-
         {/* Profile line */}
         <path d={pathData} fill="none" stroke="#0b0b0b" strokeWidth={1.5} strokeLinejoin="round" />
 
