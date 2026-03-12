@@ -1,8 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider } from "../design-system";
-import { IconAdd } from "../design-system/icons";
-import { IconSegments } from "../design-system/icons";
+import { IconAdd, IconCancel, IconConfirm, IconSegments } from "../design-system/icons";
 import { SegmentRow } from "./SegmentRow";
 import { ElevationProfile } from "./ElevationProfile";
 import { GpxSegmentPreview } from "./GpxSegmentPreview";
@@ -92,16 +91,49 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
       {/* Segments Container */}
       <div className="flex flex-col gap-[24px] w-full">
 
-        {/* EDIT SEGMENTS section header */}
-        <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px">
-          <IconSegments className="size-3 shrink-0 invert" />
-          <span className="font-['TX-02'] uppercase text-[#f8f8f8] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-            Edit Segments
-          </span>
+        {/* Section header + action buttons in one row */}
+        <div className="flex gap-[24px] items-center w-full shrink-0">
+          <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px flex-1 min-w-0">
+            <IconSegments className="size-3 shrink-0 invert" />
+            <span className="font-['TX-02'] uppercase text-[#f8f8f8] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+              Edit Segments
+            </span>
+          </div>
+          <div className="flex gap-[8px] items-center shrink-0">
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
+            >
+              <IconAdd className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Manual
+              </span>
+            </button>
+            {!gpxPoints && (
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
+              >
+                <IconAdd className="size-3 shrink-0" />
+                <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                  Upload
+                </span>
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".gpx"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
 
-        {/* Segment rows — each followed by a short divider */}
-        {segments.map((segment, index) => (
+        {/* Manual segment rows — hidden while in GPX import mode */}
+        {!gpxPoints && segments.map((segment, index) => (
           <div key={segment.id} className="flex flex-col gap-[24px]">
             <SegmentRow
               segment={segment}
@@ -114,45 +146,9 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
           </div>
         ))}
 
-        {/* ADD / UPLOAD button row */}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex gap-[8px] items-center">
-            <div className="bg-[#d9d9d9] rounded-[2px] size-[12px] shrink-0" />
-            <div className="bg-[#d9d9d9] h-[12px] rounded-[2px] shrink-0 w-[32px]" />
-          </div>
-          <div className="flex gap-[8px]">
-            <button
-              type="button"
-              onClick={handleAdd}
-              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
-            >
-              <IconAdd className="size-3 shrink-0" />
-              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-                Manual
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={handleUploadClick}
-              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
-            >
-              <IconAdd className="size-3 shrink-0" />
-              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-                Upload
-              </span>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".gpx"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-        </div>
-
+        {/* GPX elevation profile + derived segment list */}
         {gpxPoints && (
-          <div className="flex flex-col gap-[24px]">
+          <>
             <ElevationProfile
               key={gpxUploadCount}
               points={gpxPoints}
@@ -166,23 +162,35 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
               segments={derivedSegments}
               onNameChange={handleNameChange}
             />
-          </div>
+          </>
         )}
 
         <Divider />
 
-        {/* Done button */}
-        <div className="flex items-center justify-end w-full">
+        {/* Bottom action row — Cancel always visible, Done only in GPX mode */}
+        <div className="flex gap-[16px] items-center justify-end w-full shrink-0">
           <button
             type="button"
-            onClick={gpxPoints ? handleConfirmGpx : onDone}
-            className="bg-[#f86d23] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
+            onClick={onDone}
+            className="flex gap-[4px] items-center justify-center"
           >
-            <IconAdd className="size-3 shrink-0" />
+            <IconCancel className="size-3 shrink-0" />
             <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-              {gpxPoints ? "Confirm" : "Done"}
+              Cancel
             </span>
           </button>
+          {gpxPoints && (
+            <button
+              type="button"
+              onClick={handleConfirmGpx}
+              className="bg-[#f86d23] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
+            >
+              <IconConfirm className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Done
+              </span>
+            </button>
+          )}
         </div>
 
       </div>
