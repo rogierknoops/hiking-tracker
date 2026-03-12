@@ -208,7 +208,7 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
         className="w-full touch-none select-none"
-        style={{ height: H }}
+        style={{ height: H, border: "0.5px solid #d9d9d9" }}
         onPointerDown={handleSvgPointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
