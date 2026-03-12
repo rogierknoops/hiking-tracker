@@ -93,11 +93,13 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
 
         {/* Section header + action buttons in one row */}
         <div className="flex gap-[24px] items-center w-full shrink-0">
-          <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px flex-1 min-w-0">
-            <IconSegments className="size-3 shrink-0 invert" />
-            <span className="font-['TX-02'] uppercase text-[#f8f8f8] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-              Edit Segments
-            </span>
+          <div className="flex-1 min-w-0">
+            <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px shrink-0 inline-flex">
+              <IconSegments className="size-3 shrink-0 invert" />
+              <span className="font-['TX-02'] uppercase text-[#f8f8f8] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Edit Segments
+              </span>
+            </div>
           </div>
           <div className="flex gap-[8px] items-center shrink-0">
             <button
