@@ -86,6 +86,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
                           value={d.name}
                           onChange={(e) => updateDayName(index, e.target.value)}
                           className={`${tx02Text} text-[#8c8c8c] bg-transparent border-none outline-none min-w-0 flex-1 overflow-hidden`}
+                          style={{ fontSize: 16, transform: "scale(0.875)", transformOrigin: "left center" }}
                           aria-label={`Rename Day ${index + 1}`}
                         />
                       </div>
