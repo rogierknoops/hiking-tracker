@@ -87,15 +87,6 @@ export function ElevationProfile({ points, filename, onSegmentsChange }: Elevati
 
   const pathData = useMemo(() => catmullRomPath(svgPts), [svgPts]);
 
-  // Area path closes the curve to the bottom of the chart
-  const areaData = useMemo(
-    () =>
-      pathData +
-      ` L ${toSvgX(totalDist, totalDist)} ${H - PAD.bottom}` +
-      ` L ${PAD.left} ${H - PAD.bottom} Z`,
-    [pathData, totalDist]
-  );
-
   // Find elevation at a given cumulative distance using smoothed display points
   // so markers sit on the visible line
   const eleAtDist = useCallback(

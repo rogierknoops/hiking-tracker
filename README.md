@@ -24,3 +24,10 @@ npm run dev
 npm run build
 npm run preview
 ```
+
+## Deploy
+
+- **Netlify (recommended):** Connect your Git repo at [netlify.com](https://netlify.com); build and deploy are configured in `netlify.toml`. See [docs/DEPLOYMENT-Netlify.md](docs/DEPLOYMENT-Netlify.md).
+- **TransIP:** Build, then upload the contents of `dist/` to the **www** folder via SFTP. See [docs/DEPLOYMENT-TransIP.md](docs/DEPLOYMENT-TransIP.md).  
+  `npm run deploy` runs the build and reminds you to upload.
+- **Vercel / Cloudflare Pages:** Same idea as Netlify: connect repo, build command `npm run build`, publish directory `dist`.

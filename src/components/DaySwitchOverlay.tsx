@@ -6,7 +6,6 @@ const tx02 = "font-['TX-02'] text-[14px] uppercase tracking-[-0.02em] leading-[0
 
 interface DaySwitchOverlayProps {
   onClose: () => void;
-  onEditSegments: () => void;
 }
 
 /**
@@ -69,7 +68,7 @@ function EditDayRow({
   );
 }
 
-export function DaySwitchOverlay({ onClose, onEditSegments }: DaySwitchOverlayProps) {
+export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
   const days = useHikeStore((s) => s.days);
   const currentDayIndex = useHikeStore((s) => s.currentDayIndex);
   const switchDay = useHikeStore((s) => s.switchDay);

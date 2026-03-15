@@ -11,7 +11,6 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onEditSegments }: HomeScreenProps) {
-  const segments = useHikeStore((s) => s.segments);
   const currentDayIndex = useHikeStore((s) => s.currentDayIndex);
 
   const [expandedFormula, setExpandedFormula] = useState(false);
@@ -88,10 +87,6 @@ export function HomeScreen({ onEditSegments }: HomeScreenProps) {
       {daySwitchOpen && (
         <DaySwitchOverlay
           onClose={() => setDaySwitchOpen(false)}
-          onEditSegments={() => {
-            setDaySwitchOpen(false);
-            onEditSegments();
-          }}
         />
       )}
     </>

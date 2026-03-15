@@ -1,0 +1,12 @@
+# Netlify config for Vite + React SPA
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback: serve index.html for all routes (if you add client-side routing later)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

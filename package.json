@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && echo '\n→ Upload the contents of the dist/ folder to the www folder on TransIP via SFTP.\n  See docs/DEPLOYMENT-TransIP.md for details.'"
   },
   "dependencies": {
     "expr-eval": "^2.0.2",
