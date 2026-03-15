@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import type { Segment } from "../types";
 
@@ -17,9 +17,8 @@ interface SegmentRowProps {
 
 /**
  * Auto-sizing numeric input with a fixed unit suffix.
- * An invisible mirror <span> sits in the same CSS grid cell as the <input>,
- * so the input naturally widens/narrows to match the typed content.
- * Empty state shows the "-" placeholder while the unit label stays visible.
+ * Uses the HTML size attribute (character count) to size the input to its content.
+ * TX-02 is monospace so size in characters maps precisely to rendered width.
  */
 function UnitInput({
   value,
@@ -34,29 +33,31 @@ function UnitInput({
   step?: string;
   onChange: (raw: string) => void;
 }) {
-  const strValue = value === "" ? "" : String(value);
-  const mirrorText = strValue || "-";
+  const externalStr = value === "" ? "" : String(value);
+  const [localValue, setLocalValue] = useState(externalStr);
+
+  // Sync from external value unless the user is mid-decimal entry (e.g. "5." or "5,")
+  useEffect(() => {
+    if (!localValue.endsWith(".") && !localValue.endsWith(",")) {
+      setLocalValue(externalStr);
+    }
+  }, [externalStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex items-baseline">
-      {/* Grid trick: invisible span drives the input width to match content */}
-      <div className="inline-grid">
-        <span
-          className={`${tx02} invisible whitespace-pre col-start-1 row-start-1 pointer-events-none select-none`}
-          aria-hidden
-        >
-          {mirrorText}
-        </span>
-        <input
-          type="text"
-          inputMode={inputMode}
-          step={step}
-          value={strValue}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="-"
-          className={`${tx02} bg-transparent border-none outline-none w-full col-start-1 row-start-1 placeholder-[#0b0b0b]/40`}
-        />
-      </div>
+      <input
+        type="text"
+        inputMode={inputMode}
+        step={step}
+        value={localValue}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+          onChange(e.target.value);
+        }}
+        placeholder="-"
+        style={{ width: "60px" }}
+        className={`${tx02} bg-transparent border-none outline-none placeholder-[#0b0b0b]/40`}
+      />
       <span className={tx02}>{unit}</span>
     </div>
   );

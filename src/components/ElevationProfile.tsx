@@ -4,6 +4,7 @@ import { deriveSegments } from "../lib/gpx";
 
 interface ElevationProfileProps {
   points: TrackPoint[];
+  filename?: string;
   onSegmentsChange: (segments: DerivedSegment[]) => void;
 }
 
@@ -56,7 +57,7 @@ function catmullRomPath(pts: { x: number; y: number }[], tension = 0.4): string 
   return d;
 }
 
-export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileProps) {
+export function ElevationProfile({ points, filename, onSegmentsChange }: ElevationProfileProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [splitDistances, setSplitDistances] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -198,10 +199,17 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
 
   return (
     <div className="flex flex-col gap-[8px] w-full">
-      {/* Title */}
-      <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] whitespace-nowrap">
-        Elevation Profile
-      </span>
+      {/* Title row */}
+      <div className="flex gap-[8px] items-start w-full overflow-hidden">
+        <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] whitespace-nowrap shrink-0">
+          Elevation Profile
+        </span>
+        {filename && (
+          <span className="font-['TX-02'] uppercase text-[#8c8c8c] text-[14px] font-normal tracking-[-0.02em] leading-[0.85] flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-right">
+            {filename}
+          </span>
+        )}
+      </div>
 
       {/* Chart */}
       <svg
@@ -227,9 +235,9 @@ export function ElevationProfile({ points, onSegmentsChange }: ElevationProfileP
               {/* Crosshairs — only visible while actively dragging this marker */}
               {isDragging && (
                 <>
-                  <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                  <line x1={0} y1={y} x2={W} y2={y}
                     stroke="#d9d9d9" strokeWidth={1} />
-                  <line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom}
+                  <line x1={x} y1={0} x2={x} y2={H}
                     stroke="#d9d9d9" strokeWidth={1} />
                 </>
               )}

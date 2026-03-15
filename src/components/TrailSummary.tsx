@@ -32,7 +32,7 @@ export function TrailSummary() {
   const setDepartureTime = useHikeStore((s) => s.setDepartureTime);
   const timeInputRef = useRef<HTMLInputElement>(null);
 
-  const totalDistance = segments.reduce((sum, s) => sum + s.distance, 0);
+  const totalDistance = Math.round(segments.reduce((sum, s) => sum + s.distance, 0) * 10) / 10;
   const totalAscent = segments.reduce((sum, s) => sum + s.ascent, 0);
   const totalDescent = segments.reduce((sum, s) => sum + s.descent, 0);
   const totalPlanned = segments.reduce(
@@ -50,24 +50,23 @@ export function TrailSummary() {
         )
       : null;
 
-  const lastArrivedIdx = segments.reduce(
-    (best, s, i) => (s.actualArrivalTime ? i : best),
-    -1
-  );
-  const marginMinutes =
-    lastArrivedIdx >= 0
-      ? (() => {
-          const cumulativePlanned = segments
-            .slice(0, lastArrivedIdx + 1)
-            .reduce((sum, s) => sum + (s.plannedDuration ?? 0), 0);
-          const expectedEnd =
-            new Date(departureTime).getTime() + cumulativePlanned * 60000;
-          const actualEnd = new Date(
-            segments[lastArrivedIdx].actualArrivalTime!
-          ).getTime();
-          return Math.round((actualEnd - expectedEnd) / 60000);
-        })()
-      : null;
+  const marginMinutes = (() => {
+    let prevTime = departureTime;
+    let totalPlanned = 0;
+    let totalActual = 0;
+    let hasAny = false;
+    for (const s of segments) {
+      if (!s.actualArrivalTime) break;
+      const actualDur = Math.round(
+        (new Date(s.actualArrivalTime).getTime() - new Date(prevTime).getTime()) / 60000
+      );
+      totalActual += actualDur;
+      totalPlanned += s.plannedDuration ?? 0;
+      prevTime = s.actualArrivalTime;
+      hasAny = true;
+    }
+    return hasAny ? totalPlanned - totalActual : null;
+  })();
 
   return (
     <>
@@ -131,7 +130,7 @@ export function TrailSummary() {
       <div className="flex gap-[16px] items-start w-full shrink-0">
         {/* Left: geographic totals */}
         <div className="flex-1 flex flex-col gap-[12px]">
-          <StatRow label="Distance" value={`${totalDistance}km`} />
+          <StatRow label="Distance" value={`${totalDistance}KM`} />
           <StatRow label="Ascent" value={`+${totalAscent}m`} />
           <StatRow label="Descent" value={`+${totalDescent}m`} />
         </div>
@@ -161,11 +160,10 @@ export function TrailSummary() {
             {marginMinutes !== null ? (
               <div
                 className={`flex items-center justify-center px-[1px] shrink-0 ${
-                  marginMinutes >= 0 ? "bg-[var(--ds-orange)]" : "bg-[var(--ds-negative)]"
+                  marginMinutes > 0 ? "bg-[var(--ds-positive)]" : "bg-[var(--ds-negative)]"
                 }`}
               >
                 <span className={`${tx02} whitespace-nowrap`}>
-                  {marginMinutes >= 0 ? "+" : ""}
                   {formatDuration(Math.abs(marginMinutes))}
                 </span>
               </div>

@@ -56,6 +56,12 @@ export function GpxSegmentPreview({ segments, onNameChange }: GpxSegmentPreviewP
                 <span className={labelClass}>DESCENT</span>
                 <span className={valueClass}>-{seg.descent} M</span>
               </div>
+              <div className="flex gap-[16px] items-start">
+                <span className={labelClass}>GRADE</span>
+                <span className={valueClass}>
+                  {seg.grade > 0 ? "+" : ""}{(Math.atan(seg.grade / 100) * (180 / Math.PI)).toFixed(1)}°
+                </span>
+              </div>
             </div>
           </div>
         </Fragment>

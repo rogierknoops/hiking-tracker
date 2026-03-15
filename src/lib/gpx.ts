@@ -52,7 +52,19 @@ export interface DerivedSegment {
   distance: number;  // km, 2dp
   ascent: number;    // m integer
   descent: number;   // m integer
-  name: string;      // blank
+  grade: number;     // net average grade as percentage (positive = net uphill)
+  name: string;
+}
+
+export function gradeLabel(gradePercent: number): string {
+  const abs = Math.abs(gradePercent);
+  const up = gradePercent >= 0;
+  if (abs <= 3)  return "Flat";
+  if (abs <= 9)  return up ? "Gentle Climb"   : "Gentle Descent";
+  if (abs <= 15) return up ? "Moderate Climb"  : "Moderate Descent";
+  if (abs <= 30) return up ? "Steep Climb"     : "Steep Descent";
+  if (abs <= 60) return up ? "Extreme Climb"   : "Extreme Descent";
+  return              up ? "Technical Climb"  : "Technical Descent";
 }
 
 /**
@@ -79,11 +91,20 @@ export function deriveSegments(
       else descent += Math.abs(delta);
     }
 
+    const distanceKm = Math.round((end - start) * 100) / 100;
+    const netElevationM = ascent - descent;
+    const distanceM = distanceKm * 1000;
+    const grade =
+      distanceM > 0
+        ? Math.round((netElevationM / distanceM) * 1000) / 10  // one decimal %
+        : 0;
+
     return {
-      distance: Math.round((end - start) * 100) / 100,
+      distance: distanceKm,
       ascent: Math.round(ascent),
       descent: Math.round(descent),
-      name: "",
+      grade,
+      name: gradeLabel(grade),
     };
   });
 }

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider } from "../design-system";
 import { IconAdd, IconEdit, IconNested } from "../design-system/icons";
-import { getExpectedArrivalAtSegment, getSegmentMargin } from "../lib/calculations";
+import { getExpectedArrivalAtSegment } from "../lib/calculations";
 import type { Segment } from "../types";
 
 const tx02 =
@@ -69,9 +69,10 @@ function SegmentCard({
         )
       : null;
 
-  const margin = isCompleted
-    ? getSegmentMargin(segment.actualArrivalTime!, expectedArrival)
-    : null;
+  const margin =
+    isCompleted && actualDuration !== null && segment.plannedDuration != null
+      ? segment.plannedDuration - actualDuration
+      : null;
 
   return (
     <div className="flex flex-col gap-[24px] w-full">
@@ -90,7 +91,7 @@ function SegmentCard({
           {/* DISTANCE */}
           <div className="flex gap-[16px] items-start">
             <span className={`${tx02} w-[78px] shrink-0`}>Distance</span>
-            <span className={tx02}>{segment.distance}km</span>
+            <span className={tx02}>{segment.distance}KM</span>
           </div>
           {/* → TOTAL (cumulative) */}
           <div className="flex gap-[16px] items-start pl-[8px]">
@@ -98,7 +99,7 @@ function SegmentCard({
               <IconNested className="size-3 shrink-0" />
               <span className={`${tx02} w-[58px]`}>Total</span>
             </div>
-            <span className={tx02}>{cumulativeDistance}km</span>
+            <span className={tx02}>{cumulativeDistance}KM</span>
           </div>
           {/* ASCENT */}
           <div className="flex gap-[16px] items-start">
@@ -208,11 +209,10 @@ function SegmentCard({
               {margin !== null ? (
                 <div
                   className={`flex items-center justify-center px-[1px] shrink-0 ${
-                    margin >= 0 ? "bg-[var(--ds-orange)]" : "bg-[var(--ds-negative)]"
+                    margin > 0 ? "bg-[var(--ds-positive)]" : "bg-[var(--ds-negative)]"
                   }`}
                 >
                   <span className={`${tx02} whitespace-nowrap`}>
-                    {margin >= 0 ? "+" : ""}
                     {formatDuration(Math.abs(margin))}
                   </span>
                 </div>

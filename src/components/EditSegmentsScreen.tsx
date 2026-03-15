@@ -1,12 +1,14 @@
 import { useRef, useState, useCallback } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider } from "../design-system";
-import { IconAdd, IconCancel, IconConfirm, IconSegments } from "../design-system/icons";
+import { IconAdd, IconCancel, IconConfirm, IconEdit, IconSegments } from "../design-system/icons";
 import { SegmentRow } from "./SegmentRow";
 import { ElevationProfile } from "./ElevationProfile";
 import { GpxSegmentPreview } from "./GpxSegmentPreview";
-import { parseGpx } from "../lib/gpx";
+import { parseGpx, gradeLabel } from "../lib/gpx";
 import type { DerivedSegment, TrackPoint } from "../lib/gpx";
+
+type Mode = "upload" | "manual";
 
 interface EditSegmentsScreenProps {
   onDone: () => void;
@@ -16,12 +18,15 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
   const segments = useHikeStore((s) => s.segments);
   const addSegment = useHikeStore((s) => s.addSegment);
   const removeSegment = useHikeStore((s) => s.removeSegment);
+  const replaceSegments = useHikeStore((s) => s.replaceSegments);
+
+  const [mode, setMode] = useState<Mode>("upload");
   const [focusLastAdded, setFocusLastAdded] = useState(false);
   const [gpxPoints, setGpxPoints] = useState<TrackPoint[] | null>(null);
+  const [gpxFilename, setGpxFilename] = useState<string>("");
   const [derivedSegments, setDerivedSegments] = useState<DerivedSegment[]>([]);
   const [gpxUploadCount, setGpxUploadCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const replaceSegments = useHikeStore((s) => s.replaceSegments);
 
   const handleNameChange = useCallback((index: number, name: string) => {
     setDerivedSegments((prev) =>
@@ -43,6 +48,7 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
       const points = parseGpx(xml);
       if (points.length > 0) {
         setGpxPoints(points);
+        setGpxFilename(file.name.replace(/\.gpx$/i, ""));
         setDerivedSegments([]);
         setGpxUploadCount((n) => n + 1);
       } else {
@@ -55,21 +61,46 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
 
   const handleConfirmGpx = () => {
     if (derivedSegments.length === 0) return;
-    replaceSegments(derivedSegments.map((s) => ({
-      name: s.name.trim() || undefined,
-      distance: s.distance,
-      ascent: s.ascent,
-      descent: s.descent,
-    })));
+    replaceSegments(
+      derivedSegments.map((s) => ({
+        name: s.name.trim() || undefined,
+        distance: s.distance,
+        ascent: s.ascent,
+        descent: s.descent,
+      }))
+    );
     setGpxPoints(null);
     setDerivedSegments([]);
     onDone();
   };
 
   const handleAdd = () => {
+    const last = segments[segments.length - 1];
+    if (last && !last.name && last.distance === 0 && last.ascent === 0 && last.descent === 0) return;
     addSegment({ distance: 0, ascent: 0, descent: 0 });
     setFocusLastAdded(true);
   };
+
+  const handleSwitchToManual = () => {
+    setMode("manual");
+    // Discard any in-progress GPX import when switching away
+    setGpxPoints(null);
+    setDerivedSegments([]);
+  };
+
+  const handleSwitchToUpload = () => {
+    setMode("upload");
+  };
+
+  const handleDone = () => {
+    if (mode === "upload") {
+      handleConfirmGpx();
+    } else {
+      onDone();
+    }
+  };
+
+  const doneDisabled = mode === "upload" && derivedSegments.length === 0;
 
   return (
     <div
@@ -91,85 +122,133 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
       {/* Segments Container */}
       <div className="flex flex-col gap-[24px] w-full">
 
-        {/* Section header + action buttons in one row */}
+        {/* Section header + mode toggle */}
         <div className="flex gap-[24px] items-center w-full shrink-0">
           <div className="flex-1 min-w-0">
-            <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px shrink-0 inline-flex">
+            <div className="bg-[#0b0b0b] flex gap-[8px] items-center px-px inline-flex shrink-0">
               <IconSegments className="size-3 shrink-0 invert" />
               <span className="font-['TX-02'] uppercase text-[#f8f8f8] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
                 Edit Segments
               </span>
             </div>
           </div>
-          <div className="flex gap-[8px] items-center shrink-0">
+
+          {mode === "upload" ? (
             <button
               type="button"
-              onClick={handleAdd}
-              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
+              onClick={handleSwitchToManual}
+              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
             >
-              <IconAdd className="size-3 shrink-0" />
+              <IconEdit className="size-3 shrink-0" />
               <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
                 Manual
               </span>
             </button>
-            {!gpxPoints && (
+          ) : (
+            <button
+              type="button"
+              onClick={handleSwitchToUpload}
+              className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0"
+            >
+              <IconAdd className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Upload
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Upload mode */}
+        {mode === "upload" && (
+          gpxPoints ? (
+            <>
+              <ElevationProfile
+                key={gpxUploadCount}
+                points={gpxPoints}
+                filename={gpxFilename}
+                onSegmentsChange={(newSegs) => {
+                  setDerivedSegments((prev) =>
+                    newSegs.map((s, i) => {
+                      const prevSeg = prev[i];
+                      if (!prevSeg) return s; // new segment — use grade label
+                      // Preserve name only if user manually edited it (differs from auto grade label)
+                      const wasAutoLabel = !prevSeg.name || prevSeg.name === gradeLabel(prevSeg.grade);
+                      return { ...s, name: wasAutoLabel ? s.name : prevSeg.name };
+                    })
+                  );
+                }}
+              />
+              <GpxSegmentPreview
+                segments={derivedSegments}
+                onNameChange={handleNameChange}
+              />
+            </>
+          ) : (
+            <>
+              {/* Empty upload placeholder — bordered container with centred upload button */}
               <button
                 type="button"
                 onClick={handleUploadClick}
-                className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
+                className="w-full h-[152px] flex items-center justify-center"
+                style={{ border: "0.5px solid #d9d9d9" }}
               >
-                <IconAdd className="size-3 shrink-0" />
-                <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-                  Upload
-                </span>
+                <div className="bg-[#d9d9d9] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]">
+                  <IconAdd className="size-3 shrink-0" />
+                  <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                    Upload
+                  </span>
+                </div>
               </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".gpx"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-        </div>
 
-        {/* Manual segment rows — hidden while in GPX import mode */}
-        {!gpxPoints && segments.map((segment, index) => (
-          <div key={segment.id} className="flex flex-col gap-[24px]">
-            <SegmentRow
-              segment={segment}
-              index={index + 1}
-              autoFocusName={focusLastAdded && index === segments.length - 1}
-              onAutoFocusDone={() => setFocusLastAdded(false)}
-              onRemove={() => removeSegment(segment.id)}
-            />
-            <Divider length="Short" />
-          </div>
-        ))}
+              {/* Skeleton row */}
+              <div className="flex gap-[8px] items-center">
+                <div className="bg-[#d9d9d9] rounded-[2px] shrink-0 size-3" />
+                <div className="bg-[#d9d9d9] h-3 rounded-[2px] shrink-0 w-8" />
+              </div>
+            </>
+          )
+        )}
 
-        {/* GPX elevation profile + derived segment list */}
-        {gpxPoints && (
+        {/* Manual mode — segment rows */}
+        {mode === "manual" && (
           <>
-            <ElevationProfile
-              key={gpxUploadCount}
-              points={gpxPoints}
-              onSegmentsChange={(newSegs) => {
-                setDerivedSegments((prev) =>
-                  newSegs.map((s, i) => ({ ...s, name: prev[i]?.name ?? s.name }))
-                );
-              }}
-            />
-            <GpxSegmentPreview
-              segments={derivedSegments}
-              onNameChange={handleNameChange}
-            />
+            {segments.map((segment, index) => (
+              <div key={segment.id} className="flex flex-col gap-[24px]">
+                <SegmentRow
+                  segment={segment}
+                  index={index + 1}
+                  autoFocusName={focusLastAdded && index === segments.length - 1}
+                  onAutoFocusDone={() => setFocusLastAdded(false)}
+                  onRemove={() => removeSegment(segment.id)}
+                />
+                <Divider length="Short" />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="self-start flex gap-[4px] items-center"
+            >
+              <IconAdd className="size-3 shrink-0" />
+              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                Add segment
+              </span>
+            </button>
           </>
         )}
 
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".gpx"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
         <Divider />
 
-        {/* Bottom action row — Cancel always visible, Done only in GPX mode */}
+        {/* Bottom action row */}
         <div className="flex gap-[16px] items-center justify-end w-full shrink-0">
           <button
             type="button"
@@ -181,18 +260,17 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
               Cancel
             </span>
           </button>
-          {gpxPoints && (
-            <button
-              type="button"
-              onClick={handleConfirmGpx}
-              className="bg-[#f86d23] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px]"
-            >
-              <IconConfirm className="size-3 shrink-0" />
-              <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
-                Done
-              </span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleDone}
+            disabled={doneDisabled}
+            className="bg-[#f86d23] flex gap-[4px] items-center justify-center px-[8px] py-[6px] rounded-[4px] disabled:opacity-40"
+          >
+            <IconConfirm className="size-3 shrink-0" />
+            <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+              Done
+            </span>
+          </button>
         </div>
 
       </div>

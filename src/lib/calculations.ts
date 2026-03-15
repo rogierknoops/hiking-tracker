@@ -39,8 +39,8 @@ export function getExpectedEndTime(
 }
 
 /**
- * Compute margin in minutes: positive = ahead, negative = behind.
- * actualArrival - expectedArrival = margin
+ * Compute margin in minutes: positive = shorter than planned (ahead), negative = longer than planned (behind).
+ * expectedArrival - actualArrival = margin
  */
 export function getSegmentMargin(
   actualArrival: string,
@@ -48,7 +48,7 @@ export function getSegmentMargin(
 ): number {
   const actual = new Date(actualArrival).getTime();
   const expected = new Date(expectedArrival).getTime();
-  return Math.round((actual - expected) / 60000);
+  return Math.round((expected - actual) / 60000);
 }
 
 /**
