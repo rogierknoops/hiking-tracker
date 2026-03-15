@@ -52,6 +52,8 @@ interface HikeState extends HikeSession {
   addDay: () => void;
   /** Remove a day by index. Switches to an adjacent day if needed. No-op when only 1 day remains. */
   removeDay: (index: number) => void;
+  /** Rename any day by index (current or other). */
+  updateDayName: (index: number, name: string) => void;
   load: () => void;
   persist: () => void;
   reset: () => void;
@@ -170,6 +172,18 @@ export const useHikeStore = create<HikeState>((set, get) => ({
     const newDay = makeEmptySession(state.durationFormula);
     const allDays = [...updatedDays, newDay];
     set({ ...newDay, days: allDays, currentDayIndex: allDays.length - 1 });
+    get().persist();
+  },
+
+  updateDayName: (index: number, name: string) => {
+    const state = get();
+    if (index === state.currentDayIndex) {
+      set({ name });
+    } else {
+      const updatedDays = [...state.days];
+      updatedDays[index] = { ...updatedDays[index], name };
+      set({ days: updatedDays });
+    }
     get().persist();
   },
 

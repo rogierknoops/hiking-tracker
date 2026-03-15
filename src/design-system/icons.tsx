@@ -21,11 +21,11 @@ export function IconSummary({ className = iconClass }: IconProps) {
 }
 
 export function IconSegments({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.segments} alt="" aria-hidden className={className} />;
+  return <img src={iconAssets.segments} alt="" aria-hidden className={`${className} object-contain`} />;
 }
 
 export function IconFormula({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.formula} alt="" aria-hidden className={className} />;
+  return <img src={iconAssets.formula} alt="" aria-hidden className={`${className} object-contain`} />;
 }
 
 export function IconAdd({ className = iconClass }: IconProps) {
@@ -37,7 +37,7 @@ export function IconAdd({ className = iconClass }: IconProps) {
 }
 
 export function IconEdit({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.edit} alt="" aria-hidden className={className} />;
+  return <img src={iconAssets.edit} alt="" aria-hidden className={`${className} object-contain`} />;
 }
 
 export function IconArrowDown({ className = iconClass }: IconProps) {
@@ -73,7 +73,7 @@ export function IconArrowUp({ className = iconClass }: IconProps) {
 }
 
 export function IconLog({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.log} alt="" aria-hidden className={className} />;
+  return <img src={iconAssets.log} alt="" aria-hidden className={`${className} object-contain`} />;
 }
 
 export function IconConfirm({ className = iconClass }: IconProps) {

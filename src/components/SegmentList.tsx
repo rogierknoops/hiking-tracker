@@ -94,12 +94,12 @@ function SegmentCard({
             <span className={tx02}>{segment.distance}KM</span>
           </div>
           {/* → TOTAL (cumulative) */}
-          <div className="flex gap-[16px] items-start pl-[8px]">
-            <div className="flex gap-[4px] items-center shrink-0">
+          <div className="flex gap-[18px] items-start pl-[8px]">
+            <div className="flex gap-[2px] items-center shrink-0">
               <IconNested className="size-3 shrink-0" />
-              <span className={`${tx02} w-[58px]`}>Total</span>
+              <span className={`${tx02} w-[54px]`}>Total</span>
             </div>
-            <span className={tx02}>{cumulativeDistance}KM</span>
+            <span className={`${tx02} whitespace-nowrap`}>{cumulativeDistance}KM</span>
           </div>
           {/* ASCENT */}
           <div className="flex gap-[16px] items-start">
@@ -131,13 +131,13 @@ function SegmentCard({
               <span className={tx02}>{formatTime(expectedArrival)}</span>
             </div>
             {/* → DUR.: shows planned duration once the segment is reachable */}
-            <div className="flex items-start justify-between pl-[8px] w-full">
-              <div className="flex items-center shrink-0">
+            <div className="flex items-start justify-between pl-[8px] pr-[3px] w-full">
+              <div className="flex gap-[2px] items-center shrink-0">
                 <IconNested className="size-3 shrink-0" />
                 <span className={`${tx02} w-[58px]`}>Dur.</span>
               </div>
               {(isActive || isCompleted) && segment.plannedDuration != null ? (
-                <span className={tx02}>{formatDuration(segment.plannedDuration)}</span>
+                <span className={`${tx02} whitespace-nowrap`}>{formatDuration(segment.plannedDuration)}</span>
               ) : (
                 <Skeleton />
               )}
@@ -193,13 +193,13 @@ function SegmentCard({
 
           {/* Section 3: actual → DUR. + MARGIN */}
           <div className="flex flex-col gap-[16px] w-full">
-            <div className="flex items-start justify-between pl-[8px] w-full">
-              <div className="flex items-center shrink-0">
+            <div className="flex items-start justify-between pl-[8px] pr-[3px] w-full">
+              <div className="flex gap-[2px] items-center shrink-0">
                 <IconNested className="size-3 shrink-0" />
                 <span className={`${tx02} w-[58px]`}>Dur.</span>
               </div>
               {actualDuration !== null ? (
-                <span className={tx02}>{formatDuration(actualDuration)}</span>
+                <span className={`${tx02} whitespace-nowrap`}>{formatDuration(actualDuration)}</span>
               ) : (
                 <Skeleton />
               )}
