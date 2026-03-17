@@ -39,7 +39,7 @@ const sprite = [
   `<svg xmlns="http://www.w3.org/2000/svg" style="display:none">`,
   ...symbols,
   `</svg>`,
-].join("\n");
+].join("\n") + "\n";
 
 writeFileSync(OUT_FILE, sprite, "utf8");
 console.log(`✓ Sprite written to ${OUT_FILE} (${files.length} icons)`);
