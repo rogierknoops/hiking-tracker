@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import type { TrackPoint, DerivedSegment } from "../lib/gpx";
 import { deriveSegments } from "../lib/gpx";
+import { haptics } from "../lib/haptics";
 
 interface ElevationProfileProps {
   points: TrackPoint[];
@@ -67,6 +68,8 @@ export function ElevationProfile({ points, filename, onSegmentsChange, initialSp
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   // Tracks whether the current drag has moved — used to distinguish tap-to-remove from drag
   const dragMoved = useRef(false);
+  // Timestamp of the last drag haptic tick — used to throttle feedback during dragging
+  const lastDragHaptic = useRef(0);
 
   const totalDist = points[points.length - 1]?.distance ?? 1;
   const elevations = points.map((p) => p.elevation);
@@ -146,11 +149,13 @@ export function ElevationProfile({ points, filename, onSegmentsChange, initialSp
   const handleSvgPointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (draggingIndex !== null) return;
+      haptics.medium();
       const dist = svgXToDist(e.clientX);
       const newSplits = [...splitDistances, dist].sort((a, b) => a - b);
       const newIdx = newSplits.indexOf(dist);
       e.currentTarget.setPointerCapture(e.pointerId);
       dragMoved.current = true; // treat new-marker placement as already "moved"
+      lastDragHaptic.current = Date.now();
       setSplitDistances(newSplits);
       setDraggingIndex(newIdx);
       setSelectedIndex(newIdx);
@@ -165,7 +170,9 @@ export function ElevationProfile({ points, filename, onSegmentsChange, initialSp
     (e: React.PointerEvent, index: number) => {
       e.stopPropagation();
       (e.target as Element).setPointerCapture(e.pointerId);
+      haptics.light();
       dragMoved.current = false;
+      lastDragHaptic.current = Date.now();
       setDraggingIndex(index);
       setSelectedIndex(index);
     },
@@ -184,6 +191,12 @@ export function ElevationProfile({ points, filename, onSegmentsChange, initialSp
       const newIdx = newSplits.indexOf(dist);
       if (newIdx !== draggingIndex) setDraggingIndex(newIdx);
       updateSplits(newSplits);
+      // Throttled tick: fire a light haptic at most every 80 ms while dragging
+      const now = Date.now();
+      if (now - lastDragHaptic.current >= 80) {
+        haptics.light();
+        lastDragHaptic.current = now;
+      }
     },
     [draggingIndex, svgXToDist, splitDistances, updateSplits]
   );
@@ -191,6 +204,7 @@ export function ElevationProfile({ points, filename, onSegmentsChange, initialSp
   const handlePointerUp = useCallback(() => {
     // Tap on a marker (no drag movement) → remove it
     if (draggingIndex !== null && !dragMoved.current) {
+      haptics.heavy();
       updateSplits(splitDistances.filter((_, i) => i !== draggingIndex));
       setSelectedIndex(null);
     }

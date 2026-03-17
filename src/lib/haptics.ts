@@ -1,6 +1,9 @@
+import { Capacitor } from "@capacitor/core";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+
 /**
- * Haptic feedback via the Web Vibration API.
- * Silently no-ops on browsers that don't support it (e.g. iOS Safari, desktop).
+ * Haptic feedback — uses the Taptic Engine on iOS (via Capacitor) and the
+ * Web Vibration API on Android. Silently no-ops on desktop browsers.
  */
 
 function vibrate(pattern: number | number[]) {
@@ -9,16 +12,30 @@ function vibrate(pattern: number | number[]) {
   }
 }
 
+const isNative = Capacitor.isNativePlatform();
+
 export const haptics = {
   /** Subtle tap — navigation, toggles, mode switches */
-  light: () => vibrate(10),
+  light: () =>
+    isNative
+      ? Haptics.impact({ style: ImpactStyle.Light })
+      : vibrate(10),
 
   /** Standard tap — adding items, confirming actions */
-  medium: () => vibrate(25),
+  medium: () =>
+    isNative
+      ? Haptics.impact({ style: ImpactStyle.Medium })
+      : vibrate(25),
 
   /** Strong tap — destructive actions (remove/delete) */
-  heavy: () => vibrate(50),
+  heavy: () =>
+    isNative
+      ? Haptics.impact({ style: ImpactStyle.Heavy })
+      : vibrate(50),
 
   /** Double pulse — errors or disabled-state feedback */
-  error: () => vibrate([30, 60, 30]),
+  error: () =>
+    isNative
+      ? Haptics.notification({ type: NotificationType.Error })
+      : vibrate([30, 60, 30]),
 };

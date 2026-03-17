@@ -9,15 +9,20 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "npm run build && echo '\n→ Upload the contents of the dist/ folder to the www folder on TransIP via SFTP.\n  See docs/DEPLOYMENT-TransIP.md for details.'",
-    "icons": "node scripts/build-sprite.mjs"
+    "icons": "node scripts/build-sprite.mjs",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^8.0.1",
     "expr-eval": "^2.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.2.1",
     "@types/node": "^24.10.1",
