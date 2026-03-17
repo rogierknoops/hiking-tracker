@@ -1,0 +1,15 @@
+/**
+ * Base styles for SVG sprite icons.
+ * Size via Tailwind size-* or font-size on the parent.
+ * Color via currentColor — set text-* on the icon or a parent element.
+ */
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  stroke: currentColor;
+  vertical-align: middle;
+  flex-shrink: 0;
+  overflow: visible;
+}

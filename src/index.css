@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./design-system/tokens.css";
+@import "./design-system/icon-sprite.css";
 
 :root {
   --color-bg: #f8f8f8;
