@@ -79,3 +79,11 @@ export function IconDelete({ className }: NamedIconProps) {
 export function IconNested({ className }: NamedIconProps) {
   return <Icon name="nested" className={className ?? defaultClass} />;
 }
+
+export function IconArrowRight({ className }: NamedIconProps) {
+  return <Icon name="arrow-right" className={className ?? defaultClass} />;
+}
+
+export function IconUngroup({ className }: NamedIconProps) {
+  return <Icon name="ungroup" className={className ?? defaultClass} />;
+}
