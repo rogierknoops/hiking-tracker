@@ -1,7 +1,5 @@
-export interface TrackPoint {
-  distance: number;   // cumulative km from start
-  elevation: number;  // metres
-}
+import type { TrackPoint } from "../types";
+export type { TrackPoint };
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;

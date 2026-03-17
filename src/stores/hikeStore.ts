@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { HikeSession, Segment } from "../types";
+import type { HikeSession, Segment, TrackPoint } from "../types";
 import { evaluateDuration, DEFAULT_FORMULA } from "../lib/formula";
 import { loadData, saveData } from "../lib/storage";
 
@@ -54,6 +54,10 @@ interface HikeState extends HikeSession {
   removeDay: (index: number) => void;
   /** Rename any day by index (current or other). */
   updateDayName: (index: number, name: string) => void;
+  /** Persist the GPX track points and filename for the current day. */
+  setGpxData: (points: TrackPoint[], filename: string) => void;
+  /** Remove GPX data from the current day (e.g. when switching to manual mode). */
+  clearGpxData: () => void;
   load: () => void;
   persist: () => void;
   reset: () => void;
@@ -75,6 +79,8 @@ function currentDaySnapshot(state: HikeState): HikeSession {
     departureTime: state.departureTime,
     departureLogged: state.departureLogged,
     durationFormula: state.durationFormula,
+    gpxPoints: state.gpxPoints,
+    gpxFilename: state.gpxFilename,
   };
 }
 
@@ -206,6 +212,16 @@ export const useHikeStore = create<HikeState>((set, get) => ({
     }
 
     set({ ...filtered[newIndex], days: filtered, currentDayIndex: newIndex });
+    get().persist();
+  },
+
+  setGpxData: (points, filename) => {
+    set({ gpxPoints: points, gpxFilename: filename });
+    get().persist();
+  },
+
+  clearGpxData: () => {
+    set({ gpxPoints: undefined, gpxFilename: undefined });
     get().persist();
   },
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider, SectionHeader } from "../design-system";
+import { haptics } from "../lib/haptics";
 import { IconSummary } from "../design-system/icons";
 import { TrailSummary } from "./TrailSummary";
 import { SegmentList } from "./SegmentList";
@@ -33,7 +34,7 @@ export function HomeScreen({ onEditSegments }: HomeScreenProps) {
             <span className={`${tx02} font-bold`}>Hiking Pace Planner</span>
             <button
               type="button"
-              onClick={() => setDaySwitchOpen(true)}
+              onClick={() => { haptics.light(); setDaySwitchOpen(true); }}
               className="hover:opacity-70"
               aria-label="Switch days"
             >
@@ -72,7 +73,7 @@ export function HomeScreen({ onEditSegments }: HomeScreenProps) {
                 icon="segments"
                 type="Action"
                 actionLabel="Edit"
-                onAction={onEditSegments}
+                onAction={() => { haptics.light(); onEditSegments(); }}
               />
             </div>
             <SegmentList />
@@ -87,7 +88,7 @@ export function HomeScreen({ onEditSegments }: HomeScreenProps) {
               icon="formula"
               type="Dropdown"
               expanded={expandedFormula}
-              onToggle={() => setExpandedFormula((v) => !v)}
+              onToggle={() => { haptics.light(); setExpandedFormula((v) => !v); }}
             />
             {expandedFormula && <FormulaDisplay />}
           </div>

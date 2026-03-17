@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import type { Segment } from "../types";
+import { haptics } from "../lib/haptics";
 
 const tx02 =
   "font-['TX-02'] text-[14px] uppercase tracking-[-0.02em] leading-[0.85] text-[#0b0b0b]";
@@ -97,7 +98,7 @@ export function SegmentRow({
         </div>
         <button
           type="button"
-          onClick={onRemove}
+          onClick={() => { haptics.heavy(); onRemove(); }}
           className="border border-[#0b0b0b] flex items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0 ml-2"
         >
           <span className={tx02}>Remove</span>

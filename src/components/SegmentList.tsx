@@ -43,6 +43,7 @@ interface SegmentCardProps {
   expectedArrival: string;
   previousArrival: string | null;
   isActive: boolean;
+  departureLogged: boolean;
   onLog: () => void;
   onEditTime: (iso: string) => void;
 }
@@ -54,6 +55,7 @@ function SegmentCard({
   expectedArrival,
   previousArrival,
   isActive,
+  departureLogged,
   onLog,
   onEditTime,
 }: SegmentCardProps) {
@@ -120,23 +122,25 @@ function SegmentCard({
           </div>
         </div>
 
-        {/* Right: timing (171px wide)
-            Active segment uses gap-[10px] between the three sections;
-            all others use gap-[16px]. */}
-        <div className={`flex flex-col ${isActive ? "gap-[10px]" : "gap-[16px]"} w-[171px] shrink-0`}>
+        {/* Right: timing (171px wide) */}
+        <div className="flex flex-col gap-[10px] w-[171px] shrink-0">
           {/* Section 1: PLANNED arrival + planned → DUR. */}
           <div className="flex flex-col gap-[16px] w-full">
             <div className="flex items-start justify-between w-full">
               <span className={`${tx02} w-[58px] shrink-0`}>Planned</span>
-              <span className={tx02}>{formatTime(expectedArrival)}</span>
+              {departureLogged ? (
+                <span className={tx02}>{formatTime(expectedArrival)}</span>
+              ) : (
+                <Skeleton />
+              )}
             </div>
-            {/* → DUR.: shows planned duration once the segment is reachable */}
-            <div className="flex items-start justify-between pl-[8px] pr-[3px] w-full">
+            {/* → DUR.: always visible when plannedDuration is set */}
+            <div className="flex items-start justify-between pl-[8px] w-full">
               <div className="flex gap-[2px] items-center shrink-0">
                 <IconNested className="size-3 shrink-0" />
                 <span className={`${tx02} w-[58px]`}>Dur.</span>
               </div>
-              {(isActive || isCompleted) && segment.plannedDuration != null ? (
+              {segment.plannedDuration != null ? (
                 <span className={`${tx02} whitespace-nowrap`}>{formatDuration(segment.plannedDuration)}</span>
               ) : (
                 <Skeleton />
@@ -193,7 +197,7 @@ function SegmentCard({
 
           {/* Section 3: actual → DUR. + MARGIN */}
           <div className="flex flex-col gap-[16px] w-full">
-            <div className="flex items-start justify-between pl-[8px] pr-[3px] w-full">
+            <div className="flex items-start justify-between pl-[8px] w-full">
               <div className="flex gap-[2px] items-center shrink-0">
                 <IconNested className="size-3 shrink-0" />
                 <span className={`${tx02} w-[58px]`}>Dur.</span>
@@ -268,6 +272,7 @@ export function SegmentList() {
               expectedArrival={expectedArrival}
               previousArrival={previousArrival}
               isActive={isActive}
+              departureLogged={departureLogged}
               onLog={() => logArrival(segment.id)}
               onEditTime={(iso) => updateSegment(segment.id, { actualArrivalTime: iso })}
             />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { IconAdd, IconCancel, IconConfirm, IconEdit } from "../design-system/icons";
+import { haptics } from "../lib/haptics";
 
 // Shared text style (applied to the inner <p> or <input>)
 const tx02Text = "font-['TX-02'] text-[14px] uppercase tracking-[-0.02em] leading-[0.85] whitespace-nowrap";
@@ -47,7 +48,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
           <span className={`${tx02Text} font-bold text-[#0b0b0b]`}>Switch Days</span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { haptics.light(); onClose(); }}
             className="hover:opacity-70"
             aria-label="Close"
           >
@@ -94,7 +95,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeDay(index)}
+                    onClick={() => { haptics.heavy(); removeDay(index); }}
                     disabled={days.length <= 1}
                     className="shrink-0"
                     aria-label={`Remove Day ${index + 1}`}
@@ -110,7 +111,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
               <button
                 key={d.id}
                 type="button"
-                onClick={() => { switchDay(index); onClose(); }}
+                onClick={() => { haptics.medium(); switchDay(index); onClose(); }}
                 className="flex gap-[8px] items-start w-full hover:opacity-80"
               >
                 {pill}
@@ -127,7 +128,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
             <div className="flex gap-[40px] items-start justify-start w-full shrink-0">
               <button
                 type="button"
-                onClick={() => addDay()}
+                onClick={() => { haptics.medium(); addDay(); }}
                 className="flex gap-[4px] items-center justify-center hover:opacity-70"
               >
                 <IconAdd className="size-3 shrink-0" />
@@ -135,7 +136,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setIsEditMode(false)}
+                onClick={() => { haptics.light(); setIsEditMode(false); }}
                 className="flex gap-[4px] items-center justify-center hover:opacity-70"
               >
                 <IconConfirm className="size-3 shrink-0" />
@@ -147,7 +148,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
             <div className="flex flex-col items-start w-full shrink-0">
               <button
                 type="button"
-                onClick={() => setIsEditMode(true)}
+                onClick={() => { haptics.light(); setIsEditMode(true); }}
                 className="flex gap-[4px] items-center justify-center hover:opacity-70"
               >
                 <IconEdit className="size-3 shrink-0" />
@@ -161,7 +162,7 @@ export function DaySwitchOverlay({ onClose }: DaySwitchOverlayProps) {
       {/* ── Backdrop — tap to close ── */}
       <div
         className="flex-1 bg-[rgba(0,0,0,0.2)]"
-        onClick={onClose}
+        onClick={() => { haptics.light(); onClose(); }}
         aria-label="Close day switcher"
       />
     </div>

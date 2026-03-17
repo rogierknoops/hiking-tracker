@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import type { TrackPoint, DerivedSegment } from "../lib/gpx";
 import { deriveSegments } from "../lib/gpx";
 
@@ -6,6 +6,8 @@ interface ElevationProfileProps {
   points: TrackPoint[];
   filename?: string;
   onSegmentsChange: (segments: DerivedSegment[]) => void;
+  /** Pre-populate split markers (cumulative km distances, excluding 0 and total). */
+  initialSplits?: number[];
 }
 
 const W = 358; // SVG viewBox width (matches 390px - 32px padding)
@@ -57,9 +59,9 @@ function catmullRomPath(pts: { x: number; y: number }[], tension = 0.4): string 
   return d;
 }
 
-export function ElevationProfile({ points, filename, onSegmentsChange }: ElevationProfileProps) {
+export function ElevationProfile({ points, filename, onSegmentsChange, initialSplits }: ElevationProfileProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [splitDistances, setSplitDistances] = useState<number[]>([]);
+  const [splitDistances, setSplitDistances] = useState<number[]>(() => initialSplits ?? []);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   // Last-interacted marker stays visually selected after release
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -70,6 +72,15 @@ export function ElevationProfile({ points, filename, onSegmentsChange }: Elevati
   const elevations = points.map((p) => p.elevation);
   const minEle = Math.min(...elevations);
   const maxEle = Math.max(...elevations);
+
+  // Fire initial segments on mount so the parent knows the pre-populated state.
+  useEffect(() => {
+    if (!initialSplits) return;
+    const allSplits = [0, ...initialSplits, totalDist];
+    onSegmentsChange(deriveSegments(points, allSplits));
+    // Intentionally run only once on mount — changes via drag use updateSplits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Downsample + smooth for display only; original points used for segment derivation
   const displayPoints = useMemo(

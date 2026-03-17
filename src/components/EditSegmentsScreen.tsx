@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import { useHikeStore } from "../stores/hikeStore";
 import { Divider } from "../design-system";
 import { IconAdd, IconCancel, IconConfirm, IconEdit, IconSegments } from "../design-system/icons";
@@ -6,7 +6,9 @@ import { SegmentRow } from "./SegmentRow";
 import { ElevationProfile } from "./ElevationProfile";
 import { GpxSegmentPreview } from "./GpxSegmentPreview";
 import { parseGpx, gradeLabel } from "../lib/gpx";
-import type { DerivedSegment, TrackPoint } from "../lib/gpx";
+import { haptics } from "../lib/haptics";
+import type { DerivedSegment } from "../lib/gpx";
+import type { TrackPoint } from "../types";
 
 type Mode = "upload" | "manual";
 
@@ -19,14 +21,41 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
   const addSegment = useHikeStore((s) => s.addSegment);
   const removeSegment = useHikeStore((s) => s.removeSegment);
   const replaceSegments = useHikeStore((s) => s.replaceSegments);
+  const setGpxData = useHikeStore((s) => s.setGpxData);
+  const clearGpxData = useHikeStore((s) => s.clearGpxData);
+  const storedGpxPoints = useHikeStore((s) => s.gpxPoints);
+  const storedGpxFilename = useHikeStore((s) => s.gpxFilename);
 
   const [mode, setMode] = useState<Mode>("upload");
   const [focusLastAdded, setFocusLastAdded] = useState(false);
-  const [gpxPoints, setGpxPoints] = useState<TrackPoint[] | null>(null);
-  const [gpxFilename, setGpxFilename] = useState<string>("");
+  // Initialise from stored GPX data so the profile is visible on re-open.
+  const [gpxPoints, setGpxPoints] = useState<TrackPoint[] | null>(
+    () => storedGpxPoints ?? null
+  );
+  const [gpxFilename, setGpxFilename] = useState<string>(
+    () => storedGpxFilename ?? ""
+  );
   const [derivedSegments, setDerivedSegments] = useState<DerivedSegment[]>([]);
   const [gpxUploadCount, setGpxUploadCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Split positions (cumulative km, excluding 0 and total) derived from the
+   * currently stored segments.  Used to pre-populate ElevationProfile markers
+   * when restoring a previously-uploaded GPX.
+   */
+  const initialSplits = useMemo<number[]>(() => {
+    if (!storedGpxPoints || segments.length <= 1) return [];
+    const splits: number[] = [];
+    let cumulative = 0;
+    for (let i = 0; i < segments.length - 1; i++) {
+      cumulative = Math.round((cumulative + segments[i].distance) * 100) / 100;
+      splits.push(cumulative);
+    }
+    return splits;
+    // Only computed once on mount — storedGpxPoints / segments are the initial store values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNameChange = useCallback((index: number, name: string) => {
     setDerivedSegments((prev) =>
@@ -34,7 +63,10 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
     );
   }, []);
 
-  const handleUploadClick = () => fileInputRef.current?.click();
+  const handleUploadClick = () => {
+    haptics.light();
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,11 +79,13 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
       const xml = ev.target?.result as string;
       const points = parseGpx(xml);
       if (points.length > 0) {
+        haptics.medium();
         setGpxPoints(points);
         setGpxFilename(file.name.replace(/\.gpx$/i, ""));
         setDerivedSegments([]);
         setGpxUploadCount((n) => n + 1);
       } else {
+        haptics.error();
         alert("No track points found. Make sure the file is a valid GPX with a track.");
       }
     };
@@ -61,6 +95,7 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
 
   const handleConfirmGpx = () => {
     if (derivedSegments.length === 0) return;
+    haptics.medium();
     replaceSegments(
       derivedSegments.map((s) => ({
         name: s.name.trim() || undefined,
@@ -69,26 +104,32 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
         descent: s.descent,
       }))
     );
-    setGpxPoints(null);
-    setDerivedSegments([]);
+    // Persist GPX points so the elevation profile is available next time.
+    if (gpxPoints) {
+      setGpxData(gpxPoints, gpxFilename);
+    }
     onDone();
   };
 
   const handleAdd = () => {
     const last = segments[segments.length - 1];
     if (last && !last.name && last.distance === 0 && last.ascent === 0 && last.descent === 0) return;
+    haptics.medium();
     addSegment({ distance: 0, ascent: 0, descent: 0 });
     setFocusLastAdded(true);
   };
 
   const handleSwitchToManual = () => {
+    haptics.light();
     setMode("manual");
-    // Discard any in-progress GPX import when switching away
+    // Discard any in-progress GPX import and clear persisted GPX data
     setGpxPoints(null);
     setDerivedSegments([]);
+    clearGpxData();
   };
 
   const handleSwitchToUpload = () => {
+    haptics.light();
     setMode("upload");
   };
 
@@ -166,6 +207,7 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
                 key={gpxUploadCount}
                 points={gpxPoints}
                 filename={gpxFilename}
+                initialSplits={gpxUploadCount === 0 ? initialSplits : undefined}
                 onSegmentsChange={(newSegs) => {
                   setDerivedSegments((prev) =>
                     newSegs.map((s, i) => {
@@ -178,6 +220,17 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
                   );
                 }}
               />
+              {/* Allow replacing the file without leaving upload mode */}
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                className="self-start flex gap-[4px] items-center"
+              >
+                <IconAdd className="size-3 shrink-0" />
+                <span className="font-['TX-02'] uppercase text-[#0b0b0b] text-[14px] font-normal tracking-[-0.02em] leading-[0.85]">
+                  Replace file
+                </span>
+              </button>
               <GpxSegmentPreview
                 segments={derivedSegments}
                 onNameChange={handleNameChange}
@@ -252,7 +305,7 @@ export function EditSegmentsScreen({ onDone }: EditSegmentsScreenProps) {
         <div className="flex gap-[16px] items-center justify-end w-full shrink-0">
           <button
             type="button"
-            onClick={onDone}
+            onClick={() => { haptics.light(); onDone(); }}
             className="flex gap-[4px] items-center justify-center"
           >
             <IconCancel className="size-3 shrink-0" />
