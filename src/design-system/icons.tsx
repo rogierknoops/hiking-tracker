@@ -1,116 +1,81 @@
 /**
- * Icon components using fresh Figma asset URLs.
- * object-contain preserves each icon's natural aspect ratio within the 12×12 container,
- * preventing the distortion caused by stretching non-square images to fill a square box.
+ * Icon components backed by the SVG sprite at /icons/sprite.svg.
+ *
+ * Usage:
+ *   <Icon name="summary" />
+ *   <Icon name="add" className="size-4 text-ds-orange" />
+ *
+ * Adding icons: drop a .svg into public/icons/src/, run `npm run icons`.
+ *
+ * Named exports below are backwards-compatible wrappers kept for existing call sites.
+ * Prefer <Icon name="..."> for new code.
  */
 
-import { iconAssets } from "./icon-assets";
-
-const iconClass = "size-3 shrink-0 object-contain";
+const defaultClass = "icon size-3";
 
 interface IconProps {
+  name: string;
   className?: string;
 }
 
-export function IconSummary({ className = iconClass }: IconProps) {
+export function Icon({ name, className = defaultClass }: IconProps) {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className} aria-hidden>
-      <path d="M 2 5 L 10 5 M 2 7 L 10 7" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
+    <svg className={className} aria-hidden focusable="false">
+      <use href={`/icons/sprite.svg#icon-${name}`} />
     </svg>
   );
 }
 
-export function IconSegments({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.segments} alt="" aria-hidden className={`${className} object-contain`} />;
+// --- Backwards-compatible named exports ---
+
+interface NamedIconProps {
+  className?: string;
 }
 
-export function IconFormula({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.formula} alt="" aria-hidden className={`${className} object-contain`} />;
+export function IconSummary({ className }: NamedIconProps) {
+  return <Icon name="summary" className={className ?? defaultClass} />;
 }
 
-export function IconAdd({ className = iconClass }: IconProps) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className} aria-hidden>
-      <path d="M 6 2 L 6 10 M 2 6 L 10 6" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
-    </svg>
-  );
+export function IconSegments({ className }: NamedIconProps) {
+  return <Icon name="segments" className={className ?? defaultClass} />;
 }
 
-export function IconEdit({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.edit} alt="" aria-hidden className={`${className} object-contain`} />;
+export function IconFormula({ className }: NamedIconProps) {
+  return <Icon name="formula" className={className ?? defaultClass} />;
 }
 
-export function IconArrowDown({ className = iconClass }: IconProps) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="currentColor"
-      className={className}
-      aria-hidden
-    >
-      {/* Filled downward triangle — 7.5×10px within 12×12, inset 1px top/bottom, 2.25px left/right */}
-      <path d="M 2.25 1 L 9.75 1 L 6 11 Z" />
-    </svg>
-  );
+export function IconAdd({ className }: NamedIconProps) {
+  return <Icon name="add" className={className ?? defaultClass} />;
 }
 
-export function IconArrowUp({ className = iconClass }: IconProps) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="currentColor"
-      className={className}
-      aria-hidden
-    >
-      {/* Same triangle flipped vertically */}
-      <path d="M 2.25 11 L 9.75 11 L 6 1 Z" />
-    </svg>
-  );
+export function IconEdit({ className }: NamedIconProps) {
+  return <Icon name="edit" className={className ?? defaultClass} />;
 }
 
-export function IconLog({ className = iconClass }: IconProps) {
-  return <img src={iconAssets.log} alt="" aria-hidden className={`${className} object-contain`} />;
+export function IconArrowDown({ className }: NamedIconProps) {
+  return <Icon name="arrow-down" className={className ?? defaultClass} />;
 }
 
-export function IconConfirm({ className = iconClass }: IconProps) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className} aria-hidden>
-      <path d="M 2.5 6.25 L 5 8.5 L 9.5 4" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
-    </svg>
-  );
+export function IconArrowUp({ className }: NamedIconProps) {
+  return <Icon name="arrow-up" className={className ?? defaultClass} />;
 }
 
-export function IconCancel({ className = iconClass }: IconProps) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className} aria-hidden>
-      <path d="M 2.82 2.82 L 9.18 9.18 M 9.18 2.82 L 2.82 9.18" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
-    </svg>
-  );
+export function IconLog({ className }: NamedIconProps) {
+  return <Icon name="log" className={className ?? defaultClass} />;
 }
 
-export function IconDelete({ className = iconClass }: IconProps) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className={className} aria-hidden>
-      <path d="M 2 6 L 10 6" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
-    </svg>
-  );
+export function IconConfirm({ className }: NamedIconProps) {
+  return <Icon name="confirm" className={className ?? defaultClass} />;
 }
 
-export function IconNested({ className = iconClass }: IconProps) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      className={className}
-      aria-hidden
-    >
-      <path d="M 3 2.5 L 3 7.5 L 9.5 7.5" stroke="currentColor" strokeWidth="1" strokeLinecap="square" />
-    </svg>
-  );
+export function IconCancel({ className }: NamedIconProps) {
+  return <Icon name="cancel" className={className ?? defaultClass} />;
+}
+
+export function IconDelete({ className }: NamedIconProps) {
+  return <Icon name="delete" className={className ?? defaultClass} />;
+}
+
+export function IconNested({ className }: NamedIconProps) {
+  return <Icon name="nested" className={className ?? defaultClass} />;
 }
