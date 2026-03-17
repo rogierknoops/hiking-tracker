@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-add" viewBox="0 0 12 12">
+    <path d="M 6 2 L 6 10 M 2 6 L 10 6" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="icon-arrow-down" viewBox="0 0 12 12">
+    <path d="M 2.25 1 L 9.75 1 L 6 11 Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-arrow-up" viewBox="0 0 12 12">
+    <path d="M 2.25 11 L 9.75 11 L 6 1 Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-cancel" viewBox="0 0 12 12">
+    <path d="M 2.82 2.82 L 9.18 9.18 M 9.18 2.82 L 2.82 9.18" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="icon-confirm" viewBox="0 0 12 12">
+    <path d="M 2.5 6.25 L 5 8.5 L 9.5 4" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="icon-delete" viewBox="0 0 12 12">
+    <path d="M 2 6 L 10 6" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="icon-nested" viewBox="0 0 12 12">
+    <path d="M 3 2.5 L 3 7.5 L 9.5 7.5" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="icon-summary" viewBox="0 0 12 12">
+    <path d="M 2 5 L 10 5 M 2 7 L 10 7" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
+  </symbol>
+</svg>
